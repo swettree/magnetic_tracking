@@ -75,7 +75,6 @@ class PositionSolver:
 
         while not self.is_calibrated and calibration_attempts < max_attempts:
             QMC_data_list = list(self.manager.qmc_queue)
-
             if len(QMC_data_list) == self.manager.queue_maxlen:
                 try:
                     print("Start calibration attempt:", calibration_attempts + 1)
@@ -228,8 +227,8 @@ def run():
 
     communication_thread = threading.Thread(target=manager.read_data, daemon=True)
     communication_thread.start()
-    time.sleep(5)
     print("waiting for data")
+    time.sleep(2)
     position_solver = PositionSolver(config_instance, manager)
     position_solver.bt_calibration()
     if position_solver.is_calibrated:

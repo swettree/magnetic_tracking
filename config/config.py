@@ -26,7 +26,7 @@ class My_Config:
         product_id = 0x5730
 
     class CSV_Config:
-        file_path = "../log/500-500-12-0.csv"
+        file_path = "../log/single_coil/B_buffer.csv"
 
     class filter:
         alpha = 1.0
@@ -39,7 +39,7 @@ class My_Config:
     Communication_Mode = "USB"  # USB, Serial, CSV
     single_coil = True
     single_coil_name = "coil3" # coil1, coil2, coil3
-    store_file_path = "../log/single_coil/"
+    store_file_path = "../log/QMC_Calibration/"
 
 
 

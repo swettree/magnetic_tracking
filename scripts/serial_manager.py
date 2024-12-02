@@ -115,7 +115,7 @@ class USBManager(CommunicationManager):
         self.cfg = cfg
         self.device = None
         self.endpoint_in = None
-        self.start_time = time.time()
+
         self.queue_maxlen = self.cfg.queue_maxlen
         self.qmc_queue = deque(maxlen=self.queue_maxlen)
         self.lock = threading.Lock()  # Protect USB access
@@ -210,16 +210,17 @@ class USBManager(CommunicationManager):
     def read_data(self):
         MAX_RETRIES = 5
         retries = 0
+        self.start_time = time.time()
         while True:
             try:
-                with self.lock:
-                    if self.device is None:
-                        logging.info("USB device is not connected. Attempting to reconnect.")
-                        self.setup()
-                        if self.device is None:
-                            raise usb.core.USBError("Failed to reconnect to USB device")
 
-                    data = self.device.read(self.endpoint_in.bEndpointAddress, 255, timeout=5000)
+                if self.device is None:
+                    logging.info("USB device is not connected. Attempting to reconnect.")
+                    self.setup()
+                    if self.device is None:
+                        raise usb.core.USBError("Failed to reconnect to USB device")
+
+                data = self.device.read(self.endpoint_in.bEndpointAddress, 255, timeout=200)
 
                 self.process_data(data)
                 retries = 0  # 成功读取后重置重试计数
@@ -250,7 +251,7 @@ class USBManager(CommunicationManager):
 
         # 寻找帧头 0xFF 0x55
         for i in range(len(buffer) - 1):
-            if buffer[i] == 0xFF and buffer[i + 1] == 0x55:
+            if buffer[i] == 0xFF and buffer[i + 1] == 0x55 and buffer[i+4] == 0xA0:
                 buffer = buffer[i:]
                 break
         else:
@@ -294,7 +295,7 @@ class USBManager(CommunicationManager):
         timestamp = int((time.time() - self.start_time) * 1000)
 
         # 打印过滤后的值
-        # print(f"QMC2X：{QMC2X} mT, QMC2Y：{QMC2Y} mT, QMC2Z：{QMC2Z} mT, timestamp:{timestamp}")
+        print(f"QMC2X：{QMC2X} G, QMC2Y：{QMC2Y} G, QMC2Z：{QMC2Z} G, timestamp:{timestamp}")
         # 加锁并将数据添加到队列
         with self.queue_lock:
             self.qmc_queue.append([QMC2X, QMC2Y, QMC2Z, timestamp])
@@ -367,15 +368,22 @@ class CSVManager(CommunicationManager):
         data = pd.read_csv(self.file_path, header=None)
 
         # Extract magnetic field x, y, z data
-        magnetic_x = data.iloc[:, 5] / 3750
-        magnetic_y = data.iloc[:, 6] / 3750
-        magnetic_z = data.iloc[:, 7] / 3750
+        # magnetic_x = data.iloc[:, 5] / 3750
+        # magnetic_y = data.iloc[:, 6] / 3750
+        # magnetic_z = data.iloc[:, 7] / 3750
+        # # Create a time axis, assuming 170 points per second
+        # total_time = len(magnetic_x) / 170 * 1000
+        # time_axis = np.linspace(0, total_time, len(magnetic_x))
+        # magnetic = np.array([magnetic_x, magnetic_y, magnetic_z, time_axis]).T
 
-        # Create a time axis, assuming 170 points per second
-        total_time = len(magnetic_x) / 170 * 1000
-        time_axis = np.linspace(0, total_time, len(magnetic_x))
+        # Extract magnetic field x, y, z, and timestamp data
+        magnetic_x = data.iloc[:, 0].to_numpy()
+        magnetic_y = data.iloc[:, 1].to_numpy()
+        magnetic_z = data.iloc[:, 2].to_numpy()
+        timestamp = data.iloc[:, 3].to_numpy()
 
-        magnetic = np.array([magnetic_x, magnetic_y, magnetic_z, time_axis]).T
+        # Stack the data into a 2D array: rows = samples, columns = [x, y, z, timestamp]
+        magnetic = np.column_stack((magnetic_x, magnetic_y, magnetic_z, timestamp))
 
         for i in range(len(magnetic)):
             time.sleep(1 / 170)  # Simulate real-time data by waiting for a specific time interval
@@ -390,7 +398,7 @@ class CSVManager(CommunicationManager):
             self.prev_QMC2Y = QMC2Y_filtered
             self.prev_QMC2Z = QMC2Z_filtered
 
-            #print(f"QMC2X：{QMC2X_filtered}, QMC2Y：{QMC2X_filtered}, QMC2Z：{QMC2X_filtered} ")
+            print(f"QMC2X：{QMC2X_filtered}, QMC2Y：{QMC2X_filtered}, QMC2Z：{QMC2X_filtered}, Timestamp: {timestamp} ")
 
             with self.queue_lock:
                 self.qmc_queue.append([QMC2X_filtered, QMC2Y_filtered, QMC2Z_filtered, timestamp])
@@ -416,8 +424,10 @@ def main():
         # Start reading data in a separate thread
         read_thread = threading.Thread(target=manager.read_data, daemon=True)
         read_thread.start()
-        #plot_thread = threading.Thread(target=manager.plot_magnetic_field_data(), daemon=True)
-        #plot_thread.start()
+        print("clear buffer")
+        time.sleep(1)
+        # plot_thread = threading.Thread(target=manager.plot_magnetic_field_data(), daemon=True)
+        # plot_thread.start()
         # Keep the main thread running
         while True:
             time.sleep(1)
@@ -425,6 +435,10 @@ def main():
     except KeyboardInterrupt:
         print("Program has been stopped")
         manager.close()
+
+    finally:
+        if config_instance.store_data:
+            utils.store_data_in_csv(manager.B_buffer, config_instance.store_file_path, "B_buffer")
 
 if __name__ == "__main__":
     main()

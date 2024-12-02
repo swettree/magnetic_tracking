@@ -59,7 +59,13 @@ def lia(fs, data):
 def store_data_in_csv(data, data_path, data_name):
     file_path = os.path.join(data_path, f'{data_name}.csv')
 
-    with open(file_path, mode='a', newline='') as file:
+    if not os.path.exists(data_path):
+        os.makedirs(data_path)
+        print(f"目录 {data_path} 不存在，已创建。")
+
+    file_path = os.path.join(data_path, f'{data_name}.csv')
+
+    with open(file_path, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerows(data)
 
@@ -72,4 +78,6 @@ def low_pass_filter(alpha, new_value, prev_value):
     Returns:
         float: 低通滤波后的数据
     """
+    new_value = float(new_value)
+    pre_value = float(prev_value)
     return alpha * new_value + (1 - alpha) * prev_value
