@@ -37,7 +37,7 @@ class My_Config:
     Communication_Mode = "USB"  # USB, Serial, CSV
     single_coil = True
     single_coil_name = "coil3" # coil1, coil2, coil3
-    store_file_path = "../log/QMC_Calibration/"
+    store_file_path = "../log/single_coil_241203_(1.5,1.5,0.8)/"
 
 
 

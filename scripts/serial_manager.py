@@ -193,7 +193,7 @@ class USBManager(CommunicationManager):
                     if self.device is None:
                         raise usb.core.USBError("Failed to reconnect to USB device")
 
-                data = self.device.read(self.endpoint_in.bEndpointAddress, 255, timeout=200)
+                data = self.device.read(self.endpoint_in.bEndpointAddress, 255, timeout=2000)
 
                 self.process_data(data)
                 retries = 0  # 成功读取后重置重试计数
@@ -268,7 +268,7 @@ class USBManager(CommunicationManager):
         timestamp = int((time.time() - self.start_time) * 1000)
 
         # 打印过滤后的值
-        print(f"QMC2X：{QMC2X} G, QMC2Y：{QMC2Y} G, QMC2Z：{QMC2Z} G, timestamp:{timestamp}")
+        # print(f"QMC2X：{QMC2X} G, QMC2Y：{QMC2Y} G, QMC2Z：{QMC2Z} G, timestamp:{timestamp}")
         # 加锁并将数据添加到队列
         with self.queue_lock:
             self.qmc_queue.append([QMC2X, QMC2Y, QMC2Z, timestamp])
