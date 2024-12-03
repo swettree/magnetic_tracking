@@ -32,7 +32,7 @@ class PositionSolver:
         self.BT_buffer = []
         self.r_buffer = []
         self.pos_buffer = []
-
+        self.amplitude_buffer = []
 
 
     def bt_phase(self, fs, data, coil_QMC_r,  coil_pos):

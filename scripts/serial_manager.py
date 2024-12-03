@@ -2,11 +2,11 @@ import threading
 import time
 from collections import deque
 from config.config import config_instance
-import csv
 import pandas as pd
 import numpy as np
-import utils
+
 from utils import utils
+from scripts import signal_display
 # Import serial and usb libraries
 import serial
 import usb.core
@@ -129,34 +129,7 @@ class USBManager(CommunicationManager):
         self.prev_QMC2Z = 0.0
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-        # 初始化三个子图
-        self.fig, (self.ax1, self.ax2, self.ax3) = plt.subplots(3, 1, figsize=(10, 8))
 
-        # 创建三个线条对象
-        self.line_x, = self.ax1.plot([], [], color='red', label='QMC2X (G)')
-        self.line_y, = self.ax2.plot([], [], color='green', label='QMC2Y (G)')
-        self.line_z, = self.ax3.plot([], [], color='blue', label='QMC2Z (G)')
-
-        # 配置子图的标签和范围
-        self.ax1.set_title('QMC2X Data')
-        self.ax2.set_title('QMC2Y Data')
-        self.ax3.set_title('QMC2Z Data')
-
-        self.ax1.set_ylabel('Magnetic Field (G)')
-        self.ax2.set_ylabel('Magnetic Field (G)')
-        self.ax3.set_ylabel('Magnetic Field (G)')
-
-        self.ax3.set_xlabel('Data Point')
-
-        # 为每个子图添加图例
-        self.ax1.legend()
-        self.ax2.legend()
-        self.ax3.legend()
-
-        # 初始化文本标签对象，用于显示均值和方差
-        self.mean_text_x = self.ax1.text(0.02, 0.95, '', transform=self.ax1.transAxes)
-        self.mean_text_y = self.ax2.text(0.02, 0.95, '', transform=self.ax2.transAxes)
-        self.mean_text_z = self.ax3.text(0.02, 0.95, '', transform=self.ax3.transAxes)
 
     def setup(self):
         retry_count = 3  # 尝试次数
@@ -301,47 +274,6 @@ class USBManager(CommunicationManager):
             self.qmc_queue.append([QMC2X, QMC2Y, QMC2Z, timestamp])
             self.B_buffer.append([QMC2X, QMC2Y, QMC2Z, timestamp])
 
-    def plot_magnetic_field_data(self):
-        ani = animation.FuncAnimation(self.fig, self.animate, interval=20, blit=False, cache_frame_data=False)
-        plt.tight_layout()  # 调整子图之间的间距
-        plt.show()
-
-    def animate(self, frame):
-        """动画更新函数，用于刷新绘图"""
-        if len(self.qmc_queue) > 0:
-            with self.queue_lock:
-                QMC2X_vals = [data[0] for data in self.qmc_queue]
-                QMC2Y_vals = [data[1] for data in self.qmc_queue]
-                QMC2Z_vals = [data[2] for data in self.qmc_queue]
-                timestamps = [data[3] for data in self.qmc_queue]
-
-            # 更新三个子图的数据
-            self.line_x.set_data(timestamps, QMC2X_vals)
-            self.line_y.set_data(timestamps, QMC2Y_vals)
-            self.line_z.set_data(timestamps, QMC2Z_vals)
-
-            # 重新设置各个子图的数据范围
-            self.ax1.relim()
-            self.ax1.autoscale_view()
-
-            self.ax2.relim()
-            self.ax2.autoscale_view()
-
-            self.ax3.relim()
-            self.ax3.autoscale_view()
-
-            # 计算并显示均值和方差
-            mean_x = np.mean(QMC2X_vals)
-            var_x = np.var(QMC2X_vals)
-            self.mean_text_x.set_text(f'Mean: {mean_x:.4f}, Var: {var_x:.8f}')
-
-            mean_y = np.mean(QMC2Y_vals)
-            var_y = np.var(QMC2Y_vals)
-            self.mean_text_y.set_text(f'Mean: {mean_y:.4f}, Var: {var_y:.8f}')
-
-            mean_z = np.mean(QMC2Z_vals)
-            var_z = np.var(QMC2Z_vals)
-            self.mean_text_z.set_text(f'Mean: {mean_z:.4f}, Var: {var_z:.8f}')
 
 
 class CSVManager(CommunicationManager):
@@ -398,7 +330,7 @@ class CSVManager(CommunicationManager):
             self.prev_QMC2Y = QMC2Y_filtered
             self.prev_QMC2Z = QMC2Z_filtered
 
-            print(f"QMC2X：{QMC2X_filtered}, QMC2Y：{QMC2X_filtered}, QMC2Z：{QMC2X_filtered}, Timestamp: {timestamp} ")
+            # print(f"QMC2X：{QMC2X_filtered}, QMC2Y：{QMC2X_filtered}, QMC2Z：{QMC2X_filtered}, Timestamp: {timestamp} ")
 
             with self.queue_lock:
                 self.qmc_queue.append([QMC2X_filtered, QMC2Y_filtered, QMC2Z_filtered, timestamp])
@@ -419,6 +351,7 @@ def main():
         else:
             raise ValueError("Invalid communication mode specified in configuration")
 
+        magnetic_display = signal_display.SignalDisplay(config_instance, manager)
         manager.setup()
 
         # Start reading data in a separate thread
@@ -426,8 +359,8 @@ def main():
         read_thread.start()
         print("clear buffer")
         time.sleep(1)
-        # plot_thread = threading.Thread(target=manager.plot_magnetic_field_data(), daemon=True)
-        # plot_thread.start()
+        plot_thread = threading.Thread(target=magnetic_display.plot_magnetic_field_data(), daemon=True)
+        plot_thread.start()
         # Keep the main thread running
         while True:
             time.sleep(1)

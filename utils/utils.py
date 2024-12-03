@@ -15,6 +15,7 @@ def lia(fs, data):
     Amplitude and phase of a coil's signal in the magnetic sensor xyz axes
     """
     if data is not None:
+
         data = np.array(data).reshape(-1, 4)
 
         # Extract X signal

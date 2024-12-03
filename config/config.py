@@ -29,13 +29,11 @@ class My_Config:
         file_path = "../log/single_coil/B_buffer.csv"
 
     class filter:
-        alpha = 1.0
+        alpha = 0.6
 
     queue_maxlen = 170
     fs = 170  # Hz
-
-
-    store_data = True
+    store_data = False
     Communication_Mode = "USB"  # USB, Serial, CSV
     single_coil = True
     single_coil_name = "coil3" # coil1, coil2, coil3
