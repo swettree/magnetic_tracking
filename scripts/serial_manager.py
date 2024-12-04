@@ -117,9 +117,12 @@ class USBManager(CommunicationManager):
         self.endpoint_in = None
 
         self.queue_maxlen = self.cfg.queue_maxlen
+        self.BT_queue_maxlen = self.cfg.BT_queue_maxlen
         self.qmc_queue = deque(maxlen=self.queue_maxlen)
+        self.BT_queue = deque(maxlen = self.BT_queue_maxlen)
         self.lock = threading.Lock()  # Protect USB access
         self.queue_lock = threading.Lock()  # Protect queue access
+        self.BT_queue_lock = threading.Lock()
         self.csv_lock = threading.Lock()  # Protect CSV file access
         self.B_buffer = []
 
@@ -271,7 +274,11 @@ class USBManager(CommunicationManager):
         # print(f"QMC2X：{QMC2X} G, QMC2Y：{QMC2Y} G, QMC2Z：{QMC2Z} G, timestamp:{timestamp}")
         # 加锁并将数据添加到队列
         with self.queue_lock:
+            # for position solver
             self.qmc_queue.append([QMC2X, QMC2Y, QMC2Z, timestamp])
+            # for calibration
+            self.BT_queue.append([QMC2X, QMC2Y, QMC2Z, timestamp])
+            # for data save
             self.B_buffer.append([QMC2X, QMC2Y, QMC2Z, timestamp])
 
 

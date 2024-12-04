@@ -32,7 +32,7 @@ class PositionSolver:
         self.BT_buffer = []
         self.r_buffer = []
         self.pos_buffer = []
-        self.amplitude_buffer = []
+
 
 
     def bt_phase(self, fs, data, coil_QMC_r,  coil_pos):
@@ -74,8 +74,8 @@ class PositionSolver:
         max_attempts = 5
 
         while not self.is_calibrated and calibration_attempts < max_attempts:
-            QMC_data_list = list(self.manager.qmc_queue)
-            if len(QMC_data_list) == self.manager.queue_maxlen:
+            QMC_data_list = list(self.manager.BT_queue)
+            if len(QMC_data_list) == self.manager.BT_queue_maxlen:
                 try:
                     print("Start calibration attempt:", calibration_attempts + 1)
                     QMC_data = np.array(QMC_data_list).reshape(-1, 4)

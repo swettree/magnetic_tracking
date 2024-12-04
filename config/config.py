@@ -26,15 +26,16 @@ class My_Config:
         product_id = 0x5730
 
     class CSV_Config:
-        file_path = "../log/single_coil/B_buffer.csv"
+        file_path = "../log/single_coil_241203/B_buffer.csv"
 
     class filter:
         alpha = 0.6
 
     queue_maxlen = 170
+    BT_queue_maxlen = 340
     fs = 170  # Hz
     store_data = False
-    Communication_Mode = "USB"  # USB, Serial, CSV
+    Communication_Mode = "CSV"  # USB, Serial, CSV
     single_coil = True
     single_coil_name = "coil3" # coil1, coil2, coil3
     store_file_path = "../log/single_coil_241203_(1.5,1.5,0.8)/"
