@@ -12,6 +12,7 @@ class My_Config:
     class Coil3_Config:
         coil_positions = [0.1225, 0.770, 0.09]
         frequencies = [10, 9, 8]
+        current = [0.3, 1.4, 2.8]
 
     class QMC_Config:
         QMC_init_position = [0.5, 0.5, 0.004]
