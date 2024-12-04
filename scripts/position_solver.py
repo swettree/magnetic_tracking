@@ -228,7 +228,7 @@ def run():
     communication_thread = threading.Thread(target=manager.read_data, daemon=True)
     communication_thread.start()
     print("waiting for data")
-    time.sleep(2)
+    time.sleep(4)
     position_solver = PositionSolver(config_instance, manager)
     position_solver.bt_calibration()
     if position_solver.is_calibrated:
