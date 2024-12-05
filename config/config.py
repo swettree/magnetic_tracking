@@ -32,17 +32,17 @@ class My_Config:
     class filter:
         alpha = 0.6
 
-    queue_maxlen = 170
+    queue_maxlen = 340
     BT_queue_maxlen = 340
     avg_maxlen = 20
-    fs = 170  # Hz
+    #fs = 170  # Hz
 
 
     store_data = True
     Communication_Mode = "USB"  # USB, Serial, CSV
     single_coil = True
     single_coil_name = "coil3" # coil1, coil2, coil3
-    store_file_path = "../log/single_coil_241204_(pos,350,600)/"
+    store_file_path = "../log/single_coil_241204_(pos,350,600,fs, 340)/"
 
 
 
