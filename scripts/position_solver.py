@@ -5,6 +5,8 @@ from serial_manager import SerialManager, USBManager, CSVManager
 from config.config import config_instance
 import numpy as np
 from utils import utils
+from collections import deque
+
 class PositionSolver:
     def __init__(self, cfg: config_instance, communication_manager_instance):
         self.cfg = cfg
@@ -32,7 +34,7 @@ class PositionSolver:
         self.BT_buffer = []
         self.r_buffer = []
         self.pos_buffer = []
-
+        self.r_avg_queue = deque(maxlen=self.cfg.avg_maxlen)
 
 
     def bt_phase(self, fs, data, coil_QMC_r,  coil_pos):
@@ -167,21 +169,28 @@ class PositionSolver:
                     if self.cfg.single_coil:
                         if self.cfg.single_coil_name == "coil1":
                             r1 = self.r_phase(self.coil1_fre, QMC_data, self.BT_coil1)
-                            print(f"r1: {r1}")
+                            # print(f"r1: {r1}")
                             print(f"real r1: {self.coil1_QMC_r}")
                             self.r_buffer.append([r1])
+                            self.r_avg_queue.append(r1)
                         elif self.cfg.single_coil_name == "coil2":
                             r2 = self.r_phase(self.coil2_fre, QMC_data, self.BT_coil2)
-                            print(f"r2: {r2}")
+                            # print(f"r2: {r2}")
                             print(f"real r2: {self.coil2_QMC_r}")
                             self.r_buffer.append([r2])
+                            self.r_avg_queue.append(r2)
                         elif self.cfg.single_coil_name == "coil3":
                             r3 = self.r_phase(self.coil3_fre, QMC_data, self.BT_coil3)
-                            print(f"r3: {r3}")
-                            print(f"real r3: {self.coil3_QMC_r}")
+                            # print(f"r3: {r3}")
+                            # print(f"real r3: {self.coil3_QMC_r}")
                             self.r_buffer.append([r3])
+                            self.r_avg_queue.append(r3)
                         else:
                             print("undefined coil name")
+
+                        if len(self.r_avg_queue) == self.cfg.avg_maxlen:
+                            avg_r = np.mean(self.r_avg_queue, axis=0)
+                            print(avg_r)
 
                     else:
 
@@ -195,6 +204,7 @@ class PositionSolver:
                         print(f"real r1: {self.coil1_QMC_r}")
                         # print(f"real r2: {self.coil2_QMC_r}")
                         # print(f"real r3: {self.coil3_QMC_r}")
+
 
 
 

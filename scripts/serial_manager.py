@@ -117,12 +117,14 @@ class USBManager(CommunicationManager):
         self.endpoint_in = None
 
         self.queue_maxlen = self.cfg.queue_maxlen
-        self.BT_queue_maxlen = self.cfg.BT_queue_maxlen
         self.qmc_queue = deque(maxlen=self.queue_maxlen)
-        self.BT_queue = deque(maxlen = self.BT_queue_maxlen)
         self.lock = threading.Lock()  # Protect USB access
         self.queue_lock = threading.Lock()  # Protect queue access
+
+        self.BT_queue_maxlen = self.cfg.BT_queue_maxlen
+        self.BT_queue = deque(maxlen = self.BT_queue_maxlen)
         self.BT_queue_lock = threading.Lock()
+
         self.csv_lock = threading.Lock()  # Protect CSV file access
         self.B_buffer = []
 
@@ -291,6 +293,11 @@ class CSVManager(CommunicationManager):
         self.qmc_queue = deque(maxlen=self.queue_maxlen)
         self.queue_lock = threading.Lock()  # Protect queue access
         self.csv_lock = threading.Lock()  # Protect CSV file access
+
+        self.BT_queue_maxlen = self.cfg.BT_queue_maxlen
+        self.BT_queue = deque(maxlen = self.BT_queue_maxlen)
+        self.BT_queue_lock = threading.Lock()
+
         self.B_buffer = []
         self.file_path = self.cfg.CSV_Config.file_path
         # Previous filter output values initialization
@@ -341,6 +348,7 @@ class CSVManager(CommunicationManager):
 
             with self.queue_lock:
                 self.qmc_queue.append([QMC2X_filtered, QMC2Y_filtered, QMC2Z_filtered, timestamp])
+                self.BT_queue.append([QMC2X, QMC2Y, QMC2Z, timestamp])
                 self.B_buffer.append([QMC2X_filtered, QMC2Y_filtered, QMC2Z_filtered, timestamp])
 
     def close(self):
