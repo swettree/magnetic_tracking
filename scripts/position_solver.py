@@ -191,6 +191,7 @@ class PositionSolver:
                         if len(self.r_avg_queue) == self.cfg.avg_maxlen:
                             avg_r = np.mean(self.r_avg_queue, axis=0)
                             print(avg_r)
+                            print(f"real r: {self.coil3_QMC_r}")
 
                     else:
 
