@@ -3,7 +3,7 @@ import usb.util
 import numpy as np
 
 
-QMC_init_position = [0.45, 0.6, 0.004]
+QMC_init_position = [0.35, 0.60, 0.004]
 coil_positions = [0.1225, 0.770, 0.09]
 
 def qmc_init_r(QMC_init_position, coil_positions):

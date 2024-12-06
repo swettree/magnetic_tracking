@@ -89,7 +89,7 @@ class SignalDisplay:
                 QMC2Y_vals = [data[1] for data in self.manager.qmc_queue]
                 QMC2Z_vals = [data[2] for data in self.manager.qmc_queue]
                 timestamps = [data[3] for data in self.manager.qmc_queue]
-                if len(self.manager.qmc_queue) == 170:
+                if len(self.manager.qmc_queue) == self.cfg.queue_maxlen:
                     QMC_data_list = list(self.manager.qmc_queue)
                     QMC_data = np.array(QMC_data_list)
 
