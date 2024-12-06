@@ -7,9 +7,9 @@ from utils import utils
 from scripts.serial_manager import SerialManager
 from config.config import config_instance
 import time
+import logging
 
-
-
+logger = logging.getLogger(__name__)
 class SignalDisplay:
     def __init__(self, cfg, manager_instance):
         self.cfg = cfg

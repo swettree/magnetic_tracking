@@ -15,7 +15,7 @@ import logging
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-
+logger = logging.getLogger(__name__)
 class CommunicationManager:
     def setup(self):
         raise NotImplementedError
@@ -132,7 +132,7 @@ class USBManager(CommunicationManager):
         self.prev_QMC2X = 0.0
         self.prev_QMC2Y = 0.0
         self.prev_QMC2Z = 0.0
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 
 
@@ -260,14 +260,14 @@ class USBManager(CommunicationManager):
         QMC2Z_raw = to_signed_16bit(z_msb, z_lsb) / 3750
 
         # 应用低通滤波器
-        QMC2X = utils.low_pass_filter(self.cfg.filter.alpha, QMC2X_raw, self.prev_QMC2X)
-        QMC2Y = utils.low_pass_filter(self.cfg.filter.alpha, QMC2Y_raw, self.prev_QMC2Y)
-        QMC2Z = utils.low_pass_filter(self.cfg.filter.alpha, QMC2Z_raw, self.prev_QMC2Z)
+        QMC2X_filtered = utils.low_pass_filter(self.cfg.filter.alpha, QMC2X_raw, self.prev_QMC2X)
+        QMC2Y_filtered = utils.low_pass_filter(self.cfg.filter.alpha, QMC2Y_raw, self.prev_QMC2Y)
+        QMC2Z_filtered = utils.low_pass_filter(self.cfg.filter.alpha, QMC2Z_raw, self.prev_QMC2Z)
 
         # 更新之前的数据
-        self.prev_QMC2X = QMC2X
-        self.prev_QMC2Y = QMC2Y
-        self.prev_QMC2Z = QMC2Z
+        self.prev_QMC2X = QMC2X_filtered
+        self.prev_QMC2Y = QMC2Z_filtered
+        self.prev_QMC2Z = QMC2Z_filtered
 
         # 获取时间戳
         timestamp = int((time.time() - self.start_time) * 1000)
@@ -276,12 +276,10 @@ class USBManager(CommunicationManager):
         # print(f"QMC2X：{QMC2X} G, QMC2Y：{QMC2Y} G, QMC2Z：{QMC2Z} G, timestamp:{timestamp}")
         # 加锁并将数据添加到队列
         with self.queue_lock:
-            # for position solver
-            self.qmc_queue.append([QMC2X, QMC2Y, QMC2Z, timestamp])
-            # for calibration
-            self.BT_queue.append([QMC2X, QMC2Y, QMC2Z, timestamp])
-            # for data save
-            self.B_buffer.append([QMC2X, QMC2Y, QMC2Z, timestamp])
+            self.qmc_queue.append([QMC2X_filtered, QMC2Y_filtered, QMC2Z_filtered, timestamp])
+        with self.BT_queue_lock:
+            self.BT_queue.append([QMC2X_raw, QMC2Y_raw, QMC2Z_raw, timestamp])
+        self.B_buffer.append([QMC2X_filtered, QMC2Y_filtered, QMC2Z_filtered, timestamp])
 
 
 
@@ -348,8 +346,10 @@ class CSVManager(CommunicationManager):
 
             with self.queue_lock:
                 self.qmc_queue.append([QMC2X_filtered, QMC2Y_filtered, QMC2Z_filtered, timestamp])
+            with self.BT_queue_lock:
                 self.BT_queue.append([QMC2X, QMC2Y, QMC2Z, timestamp])
-                self.B_buffer.append([QMC2X_filtered, QMC2Y_filtered, QMC2Z_filtered, timestamp])
+
+            self.B_buffer.append([QMC2X_filtered, QMC2Y_filtered, QMC2Z_filtered, timestamp])
 
     def close(self):
         # No actual hardware to close for CSV reading
@@ -374,7 +374,7 @@ def main():
         read_thread.start()
         print("clear buffer")
         time.sleep(1)
-        plot_thread = threading.Thread(target=magnetic_display.plot_magnetic_field_data(), daemon=True)
+        plot_thread = threading.Thread(target=magnetic_display.plot_magnetic_field_data, daemon=True)
         plot_thread.start()
         # Keep the main thread running
         while True:
