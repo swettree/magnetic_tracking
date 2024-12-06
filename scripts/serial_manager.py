@@ -38,7 +38,11 @@ class SerialManager(CommunicationManager):
         self.lock = threading.Lock()  # Protect serial port access
         self.queue_lock = threading.Lock()  # Protect queue access
         self.csv_lock = threading.Lock()  # Protect CSV file access
+        self.BT_queue_lock = threading.Lock()
         self.B_buffer = []
+        # 添加 BT_queue
+        self.BT_queue_maxlen = self.cfg.general.BT_queue_maxlen
+        self.BT_queue = deque(maxlen=self.BT_queue_maxlen)
 
         # Previous filter output values initialization
         self.prev_QMC2X = 0.0
@@ -107,7 +111,8 @@ class SerialManager(CommunicationManager):
             with self.queue_lock:
                 self.qmc_queue.append([QMC2X, QMC2Y, QMC2Z, timestamp])
                 self.B_buffer.append([QMC2X, QMC2Y, QMC2Z, timestamp])
-
+            with self.BT_queue_lock:
+                self.BT_queue.append([QMC2X, QMC2Y, QMC2Z, timestamp])
 
 
 class USBManager(CommunicationManager):
@@ -374,8 +379,8 @@ def main():
         read_thread.start()
         print("clear buffer")
         time.sleep(1)
-        plot_thread = threading.Thread(target=magnetic_display.plot_magnetic_field_data, daemon=True)
-        plot_thread.start()
+        magnetic_display.plot_magnetic_field_data()
+        
         # Keep the main thread running
         while True:
             time.sleep(1)
